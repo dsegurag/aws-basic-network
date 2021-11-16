@@ -1,0 +1,76 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+# Description:
+#   String
+
+# Metadata:
+#   template metadata
+
+# Parameters:
+#   set of parameters
+
+# Rules:
+#   set of rules
+
+# Mappings:
+#   set of mappings
+
+# Conditions:
+#   set of conditions
+
+# Transform:
+#   set of transforms
+
+Resources:
+{%- if network.vpc is defined %}
+
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: {{ network.vpc }}
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      InstanceTenancy: default
+      Tags:
+        - Key: Name
+          Value: VPC
+{%- if network.public_subnets is defined %}
+{%- for subnet in network.public_subnets %}
+
+  PublicSubnet{{ loop.index }}:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select
+        - {{ loop.index0 }}
+        - !GetAZs
+          Ref: 'AWS::Region'
+      CidrBlock: {{ subnet }}
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: PublicSubnet{{ loop.index }}
+      VpcId: !Ref VPC
+{%- endfor %}
+{%- endif %}
+{%- if network.private_subnets is defined %}
+{%- for subnet in network.private_subnets %}
+
+  PrivateSubnet{{ loop.index }}:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select
+        - {{ loop.index0 }}
+        - !GetAZs
+          Ref: 'AWS::Region'
+      CidrBlock: {{ subnet }}
+      Tags:
+        - Key: Name
+          Value: PrivateSubnet{{ loop.index }}
+      VpcId: !Ref VPC
+{%- endfor %}
+{%- endif %}
+{%- endif %}
+
+# Outputs:
+#   set of outputs
